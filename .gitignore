@@ -1,0 +1,6 @@
+DB/
+node_modules/
+anti-ddos-487020-6045a773e33a.json
+.env
+log.log
+tts_*.*

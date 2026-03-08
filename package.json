@@ -1,0 +1,24 @@
+{
+  "name": "tts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@discordjs/voice": "^0.19.0",
+    "@google-cloud/text-to-speech": "^6.4.0",
+    "@snazzah/davey": "^0.1.9",
+    "axios": "^1.13.5",
+    "discord.js": "^14.25.1",
+    "dotenv": "^17.3.1",
+    "es-hangul": "^2.3.8",
+    "ffmpeg-static": "^5.3.0",
+    "libsodium-wrappers": "^0.8.2",
+    "opusscript": "^0.0.8"
+  }
+}
