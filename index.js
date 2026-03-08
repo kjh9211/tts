@@ -36,6 +36,9 @@ const client = new Client({
 
 const ttsClient = new textToSpeech.TextToSpeechClient();
 
+/**@type {import('discord.js').User} */
+let dev = null;
+
 /* ===================== 음성 목록 ===================== */
 
 const voices = {
@@ -261,9 +264,10 @@ const commands = [
 ]
 
 /* ===================== Discord Client ===================== */
-client.once(Events.ClientReady, () => {
-    client.application.commands.set(commands);
+client.once(Events.ClientReady, async () => {
+    await client.application.commands.set(commands);
     console.log('Bot is ready!');
+    dev = await client.users.fetch(process.env.devId);
 });
 
 /* ===================== Guild Join ===================== */
@@ -349,7 +353,7 @@ client.on(Events.InteractionCreate, async i => {
     }
 
     if (i.commandName === '개발자') {
-        if (i.user.id === "914868227652337695")
+        if (i.user.id === process.env.devId)
         switch (i.options.getSubcommand()) {
             case "공지":{
                 await i.deferReply({flags:["Ephemeral"]});
@@ -443,6 +447,11 @@ client.on(Events.MessageCreate, async (msg) => {
     processQueue(msg.guildId, msg.channel.id);
 });
 
+/* ===================== ERROR CHACH ===================== */
+client.on(Events.Error, async (error) => {
+    const _msg = await dev.send(`에러발생\n에러이름: ${error.name}\n에러사유: ${error.cause}\n에러메세지: ${error.message}\n에러객체:\`\`\`json\n${JSON.stringify(error, null, 2)}\`\`\``);
+    console.error(`[ERROR] ${error.name} error raised. Check this(${_msg.url}) message.`)
+})
 /* ===================== Login ===================== */
 
 client.login(process.env.DISCORD_TOKEN);
