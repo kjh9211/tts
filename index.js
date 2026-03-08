@@ -157,7 +157,7 @@ async function processQueue(guildId, channelId) {
 async function log(filepath, text) {
     let data = await fs.readFileSync(filepath);
     data = data + ("\n"+text);
-    await fs.writeFileSync(filepath,text);
+    await fs.writeFileSync(filepath,data);
 }
 
 const isValidURL = (string) => {
@@ -383,10 +383,10 @@ client.on(Events.InteractionCreate, async i => {
 
         players[i.guildId] ??= createAudioPlayer();
         conn.subscribe(players[i.guildId]);
-        targetTextChannel[i.guildId] = i.options.getChannel('채팅채널');
+        targetTextChannel[i.guildId] = i.options.getChannel('채팅채널').id;
         await i.guild.members.me.voice?.setDeaf(true);
 
-        return i.reply({ content: '음성 채널에 접속했습니다.', ephemeral: true });
+        return i.reply({ content: `음성 채널에 접속했습니다. vcid:${vc.id}, tcid:${i.options.getChannel('채팅채널').id}`, ephemeral: true });
     
             }
             default:
@@ -422,7 +422,7 @@ client.on(Events.MessageCreate, async (msg) => {
         .replaceAll("ㅅㄱ","수고")
         .replaceAll("ㅂㅅ","병신")
         .replaceAll("ㅄ","병신")
-        .replaceAll("ㄳ","감사")
+        .replaceAll("ㄳ","감+사")
         .replaceAll("ㄱㅅ","감사")
         .replaceAll("ㄱㄴㄲ","그니까")
         .replaceAll("ㄱㄴ","가능")
