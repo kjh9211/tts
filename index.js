@@ -360,7 +360,7 @@ client.on(Events.InteractionCreate, async i => {
 
                 if (i.options.getString('전송대상') === "voicechannel")
                 await i.client.guilds.cache.forEach(async (g) => {
-                    const c = await getVoiceConnection(i.guild.id);
+                    const c = await getVoiceConnection(g.id);
                     if (!c) {
                         await (await g.members.fetch(g.ownerId)).send(i.options.getString('내용'));
                     }
@@ -422,13 +422,16 @@ client.on(Events.MessageCreate, async (msg) => {
         .replaceAll("ㅅㄱ","수고")
         .replaceAll("ㅂㅅ","병신")
         .replaceAll("ㅄ","병신")
-        .replaceAll("ㄳ","감+사")
+        .replaceAll("ㄳ","감사")
         .replaceAll("ㄱㅅ","감사")
         .replaceAll("ㄱㄴㄲ","그니까")
         .replaceAll("ㄱㄴ","가능")
         .replaceAll("ㄱㅅㄲ","개새끼")
         .replaceAll("ㅗ","엿")
         .replaceAll("ㅅㅅ","섹스")
+        .replaceAll("ㄹㅇ","레알")
+        .replaceAll("ㅈㅅ","죄송")
+        .replaceAll(" "," ") // 양식용으로 남겨놓깅
         .replaceAll("ㅊㅇ","차이");
     if (msg.attachments.size > 0) {
         const queue = getQueue(msg.guildId, msg.channel.id);
