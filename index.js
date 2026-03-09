@@ -1,3 +1,4 @@
+"use strict";
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
@@ -318,7 +319,7 @@ client.on(Events.InteractionCreate, async i => {
 
     if (i.commandName === '나가') {
         const conn = getVoiceConnection(i.guildId);
-        if (i.member.voice.channel.id !== conn.joinConfig.channelId) return i.reply({content: '음성채널에 들어가야지 봇을 퇴장시킬 수 있습니다.', flags:["Ephemeral"]});
+        if (i.member.voice.channel?.id !== conn.joinConfig.channelId) return i.reply({content: '음성채널에 들어가야지 봇을 퇴장시킬 수 있습니다.', flags:["Ephemeral"]});
         if (conn) conn.destroy();
         delete targetTextChannel[i.guildId];
         return i.reply({ content: '퇴장했습니다.', ephemeral: true });
