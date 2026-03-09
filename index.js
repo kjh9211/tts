@@ -500,7 +500,7 @@ client.on(Events.MessageCreate, async (msg) => {
 /* ===================== ERROR CHACH ===================== */
 client.on(Events.Error, async (error) => {
     const _msg = await dev.send(`에러발생\n에러이름: ${error.name}\n에러사유: ${error.cause}\n에러메세지: ${error.message}\n에러객체:\`\`\`json\n${JSON.stringify(error, null, 2)}\`\`\``);
-    console.error(`[ERROR] ${error.name} error raised. Check this(${_msg.url}) message.`)
+    console.error(`[ERROR] ${error.name} error raised. Check this(${_msg.url}) message.`);
 })
 /* ===================== Login ===================== */
 
