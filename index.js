@@ -11,7 +11,10 @@ const {
     SlashCommandBuilder,
     Events,
     NewsChannel,
-    ChannelType
+    ChannelType,
+    VoiceState,
+    PermissionsBitField,
+    GuildMember
 } = require('discord.js');
 
 const {
@@ -223,6 +226,20 @@ const commands = [
              .setMaxValue(20)
         ),
     new SlashCommandBuilder()
+        .setName('이동')
+        .setDescription('멤버나 자기자신을 다른 음성채널로 이동시킵니다.')
+        .addChannelOption(o=>o
+            .setName('채널')
+            .setDescription('이동할 채널을 선택해주세요')
+            .addChannelTypes(ChannelType.GuildVoice)
+            .setRequired(true)
+        )
+        .addUserOption(o=>o
+            .setName('대상')
+            .setDescription('이동시킬 대상, 미선택시 자기자신')
+            .setRequired(false)
+        ),
+    new SlashCommandBuilder()
         .setName('개발자')
         .setDescription('개발자')
         .addSubcommand(sub=>sub
@@ -301,9 +318,41 @@ client.on(Events.InteractionCreate, async i => {
 
     if (i.commandName === '나가') {
         const conn = getVoiceConnection(i.guildId);
+        if (i.member.voice.channel.id !== conn.joinConfig.channelId) return i.reply({content: '음성채널에 들어가야지 봇을 퇴장시킬 수 있습니다.', flags:["Ephemeral"]});
         if (conn) conn.destroy();
         delete targetTextChannel[i.guildId];
         return i.reply({ content: '퇴장했습니다.', ephemeral: true });
+    }
+
+    if (i.commandName === '이동') {
+        const imember = i.member;
+        /**@type {import('discord.js').GuildTextBasedChannel} */
+        const ch = i.options.getChannel('채널');
+
+        const target = i.options.getMember('대상');
+        if (!ch) return i.reply({content: "존재하지 않는 채널입니다."});
+
+        await i.deferReply({flags:["Ephemeral"]});
+
+        if (!target || target.id === i.user.id) { // 자기자신을 이동시키는 경우
+            const chperms = ch.permissionsFor(imember).has(PermissionsBitField.Flags.Connect) && ch.permissionsFor(imember).has(PermissionsBitField.Flags.ViewChannel);
+            if (!chperms) return i.editReply({content: '이 채널은 당신이 접속할 수 없는 채널입니다.'});
+
+            i.member.voice.setChannel(ch)
+            .then(()=>i.editReply(`${ch.name}채널로 이동했습니다`))
+            .catch(err => {
+                i.editReply('오류가 발생했습니다! 나중에 다시 시도해주세요')
+                console.error(err+"");
+            });
+        } else {
+            if (!imember.permissions.has(PermissionsBitField.Flags.MoveMembers)) return i.editReply('이 명령어를 사용할 권한이 없습니다. 본인을 선택하거나 권한을 부여받으십시오.');
+            target.voice.setChannel(ch)
+            .then(()=>i.editReply(`${target.displayName}님을 ${ch.name}채널로 이동했습니다`))
+            .catch(err => {
+                i.editReply('오류가 발생했습니다! 나중에 다시 시도해주세요')
+                console.error(err+"");
+            });
+        }
     }
 
     if (i.commandName === '설정') {
@@ -324,6 +373,7 @@ client.on(Events.InteractionCreate, async i => {
             ephemeral: true
         });
     }
+
     if (i.commandName === "설정공유"){
         if (i.options.getSubcommand()==="공유"){
             await i.deferReply({flags:["Ephemeral"]})
