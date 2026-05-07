@@ -306,7 +306,7 @@ client.on(Events.InteractionCreate, async i => {
         const conn = joinVoiceChannel({
             channelId: vc.id,
             guildId: vc.guild.id,
-            adapterCreator: vc.guild.voiceAdapterCreator
+            adapterCreator: vc.guild.voiceAdapterCreator,
         });
 
         players[i.guildId] ??= createAudioPlayer();
@@ -408,21 +408,28 @@ client.on(Events.InteractionCreate, async i => {
         switch (i.options.getSubcommand()) {
             case "공지":{
                 await i.deferReply({flags:["Ephemeral"]});
+                let count = 0;
                 if (i.options.getString('전송대상') === "onlyserverowner")
                 await i.client.guilds.cache.forEach(async (g) => {
                     await (await g.members.fetch(g.ownerId)).send(i.options.getString('내용'));
+                    count++;
                 });
 
                 if (i.options.getString('전송대상') === "voicechannel")
+                    
                 await i.client.guilds.cache.forEach(async (g) => {
                     const c = await getVoiceConnection(g.id);
                     if (!c) {
                         await (await g.members.fetch(g.ownerId)).send(i.options.getString('내용'));
+                        count++;
                     }
                     else {
-                        await (await g.channels.fetch(c.joinConfig.channelId)).send(i.options.getString('내용'))
+                        await (await g.channels.fetch(c.joinConfig.channelId)).send(i.options.getString('내용'));
+                        count++;
                     }
                 });
+
+                i.editReply({content:`${count}개의 ${i.options.getString('전송대상')==="voicechannel"?"음성채널에":"서버주인에게"} 메세지를 전송했습니다`});
 
                 break;
             }
@@ -487,6 +494,8 @@ client.on(Events.MessageCreate, async (msg) => {
         .replaceAll("ㄹㅇ","레알")
         .replaceAll("ㅈㅅ","죄송")
         .replaceAll(" "," ") // 양식용으로 남겨놓깅
+        .replaceAll("ㄹㅈㄷ","레전드")
+        .replaceAll("ㅁㅊ","미친") 
         .replaceAll("ㅊㅇ","차이");
     if (msg.attachments.size > 0) {
         const queue = getQueue(msg.guildId, msg.channel.id);
@@ -497,12 +506,54 @@ client.on(Events.MessageCreate, async (msg) => {
 
     processQueue(msg.guildId, msg.channel.id);
 });
+/* ===================== 전원 퇴장시 자동 나가기 ===================== */
 
+client.on(Events.VoiceStateUpdate, (oldState, newState) => {
+    const guildId = oldState.guild.id;
+    const conn = getVoiceConnection(guildId);
+    if (!conn) return;
+
+    // 봇이 현재 접속 중인 채널 ID
+    const botChannelId = conn.joinConfig.channelId;
+
+    // 봇이 있는 채널의 Channel 객체 가져오기
+    const channel = oldState.guild.channels.cache.get(botChannelId);
+    if (!channel) return;
+
+    // 채널에 남아 있는 사람(봇 제외) 수 확인
+    const humanCount = channel.members.filter(m => !m.user.bot).size;
+
+    if (humanCount === 0) {
+        conn.destroy();
+        delete targetTextChannel[guildId];
+        delete players[guildId];
+        delete playing[guildId];
+        if (queues[guildId]) delete queues[guildId];
+        console.log(`[${guildId}] 모든 사용자가 퇴장하여 봇이 자동으로 나갔습니다.`);
+    }
+});
 /* ===================== ERROR CHACH ===================== */
 client.on(Events.Error, async (error) => {
     const _msg = await dev.send(`에러발생\n에러이름: ${error.name}\n에러사유: ${error.cause}\n에러메세지: ${error.message}\n에러객체:\`\`\`json\n${JSON.stringify(error, null, 2)}\`\`\``);
     console.error(`[ERROR] ${error.name} error raised. Check this(${_msg.url}) message.`);
 })
+
+process.on('unhandledRejection', async (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    try {
+        await dev.send(`[ERROR] ${error.name} error raised.`);
+        console.error(`에러발생\n에러이름: ${error.name}\n에러사유: ${error.cause}\n에러메세지: ${error.message}\n에러객체:\`\`\`json\n${JSON.stringify(error, null, 2)}\`\`\``);
+    } catch (error) {
+        console.error(`에러발생\n에러이름: ${error.name}\n에러사유: ${error.cause}\n에러메세지: ${error.message}\n에러객체:\`\`\`json\n${JSON.stringify(error, null, 2)}\`\`\``);
+    }
+});
+
+// 3. 잡지 못한 예외 처리 (이게 있어야 봇이 안 꺼짐)
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    // 주의: 이 이벤트가 발생하면 프로세스가 불안정할 수 있으므로 
+    // 로깅 후 안전하게 재시작하는 구조를 권장합니다.
+});
 /* ===================== Login ===================== */
 
 client.login(process.env.DISCORD_TOKEN);
